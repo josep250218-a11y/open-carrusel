@@ -88,18 +88,11 @@ export async function exportSlide(
     await page.setViewport({ width, height, deviceScaleFactor: 1 });
     await page.setContent(fullHtml, { waitUntil: "domcontentloaded", timeout: 15000 });
 
-    // Wait for fonts to be ready
-    await page
-      .waitForFunction(
-        () =>
-          document.fonts.ready.then(() =>
-            [...document.fonts].every((f) => f.status === "loaded")
-          ),
-        { timeout: 10000 }
-      )
-      .catch(() => {
-        // Font loading timeout — proceed with whatever loaded
-      });
+    // Wait for fonts to be ready.
+    // Parche local 18/sep/2026 (mini-agencia, no upstream): `fonts.ready` basta.
+    // `every(loaded)` nunca se cumplia — Outfit.css declara pesos que ninguna
+    // lamina usa (status "unloaded") — y cada slide gastaba los 10 s del timeout.
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
 
     const screenshotBuffer = await page.screenshot({
       type: "png",
